@@ -33,15 +33,27 @@ public class Routes extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
-	restConfiguration() 
+	restConfiguration()
+	    .producerComponent("http")
             .component("platform-http")
             .host("localhost")
             .port("8080")
             .bindingMode(RestBindingMode.json);
 	
-	from("platform-http:/items")
-		.setExchangePattern(ExchangePattern.InOut)
+	rest()
+		.get("/items")
 		.to("direct:getdata");
+	from("direct:getdata")
+		.to("rest:get:/siri/vm" + "?host=http://data.foli.fi:80");
+/*		.to("direct:filtering");
+	from("direct:filtering")
+		.log("body here : + ${body}")
+		.marshal().json(JsonLibrary.Jackson)
+		.setBody().jsonpath("$.result.vehicles")
+		.filter().jsonpath("$..[?(@.lineref)]")
+		.setBody().jsonpath("$..['lineref', 'publishedlinename', 'originname', 'destinationname', 'longitude', 'latitude', 'vehicleref']")
+		.unmarshal().json()
+		;
 
 	from("direct:getdata")
                 .process(new Processor() {
@@ -72,6 +84,6 @@ public class Routes extends RouteBuilder {
 			String outJson = mapper.writeValueAsString(outArray);
 			System.out.println(outJson);
 			exchange.getIn().setBody(outJson);
-		}});
+		}});*/
     }
 }

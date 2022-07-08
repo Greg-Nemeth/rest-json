@@ -22,7 +22,7 @@ import org.apache.camel.Processor;
 import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.apache.camel.model.dataformat.JsonLibrary;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.acme.rest.json.OutPutVehicleModel;
 import org.acme.rest.json.Vehicle;
 import static org.acme.rest.json.Gzip.*;
 
@@ -34,27 +34,29 @@ public class Routes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 	restConfiguration()
-	    .producerComponent("http")
             .component("platform-http")
             .host("localhost")
             .port("8080")
             .bindingMode(RestBindingMode.json);
 	
-	rest()
-		.get("/items")
-		.to("direct:getdata");
-	from("direct:getdata")
-		.to("rest:get:/siri/vm" + "?host=http://data.foli.fi:80");
-/*		.to("direct:filtering");
-	from("direct:filtering")
-		.log("body here : + ${body}")
-		.marshal().json(JsonLibrary.Jackson)
-		.setBody().jsonpath("$.result.vehicles")
-		.filter().jsonpath("$..[?(@.lineref)]")
-		.setBody().jsonpath("$..['lineref', 'publishedlinename', 'originname', 'destinationname', 'longitude', 'latitude', 'vehicleref']")
-		.unmarshal().json()
+	from("platform-http:/items")
+		.removeHeader(Exchange.HTTP_PATH)
+		.to("rest:get:/siri/vm" +"?host=http://data.foli.fi:80"+"&bridgeEndpoint=true")
+                .filter().jsonpath("$..[?(@.lineref)]")
+                .setBody().jsonpath("$..['lineref', 'publishedlinename', 'originname', 'destinationname', 'longitude', 'latitude', 'vehicleref']")
+		.process(new Processor() {
+		@Override
+		public void process(Exchange exchange) throws Exception {
+		var body = exchange.getMessage().getBody();
+                              ObjectMapper mapper = new ObjectMapper();
+                              String jsonArray = mapper.writeValueAsString(body);
+                              Vehicle[] asArray = mapper.readValue(jsonArray, Vehicle[].class);
+                              List<OutPutVehicleModel> outArray = Arrays.stream(asArray).map(v -> new OutPutVehicleModel(v)).collect(Collectors.toList());
+                              String outJson = mapper.writeValueAsString(outArray); 
+                              exchange.getIn().setBody(outJson); 
+                }})
 		;
-
+/*
 	from("direct:getdata")
                 .process(new Processor() {
                 @Override

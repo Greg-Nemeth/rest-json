@@ -8,7 +8,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
 
-import com.devikone.processors.MyBean;
+import org.acme.rest.json.MyBean;
 
 @ApplicationScoped
 public class Routes extends RouteBuilder {
@@ -33,9 +33,8 @@ public class Routes extends RouteBuilder {
                 .bean(myBean, "process")
                 ;
 
-        from("platform-http:/item")
-            .convertBodyTo(String.class)
-            .to("facebook://postFeed/inBody=postUpdate?oAuthAppId=572293164517199&oAuthAppSecret=d492157bc32ee45fce01576e5659bdaf")
+	from("platform-http:/item")
+           .to("telegram:bots?authorizationToken=5455421420:AAHleg2bec23_0pzWD3cMvAGmnT4FwV4tOk&chatId=5370273744");
             ;
     }
 }

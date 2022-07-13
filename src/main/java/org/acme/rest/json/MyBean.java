@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
-
+import org.apache.camel.component.telegram.model.MessageResult;
 import org.apache.camel.Exchange;
 import org.acme.rest.json.OutPutVehicleModel;
 import org.acme.rest.json.Vehicle;
@@ -23,6 +23,12 @@ public class MyBean {
         String outJson = mapper.writeValueAsString(outArray);
         exchange.getIn().setBody(outJson);
 	}
+
+    public void telegramProcess(Exchange exchange) throws Exception {
+        var body = exchange.getMessage().getBody(MessageResult.class);
+        exchange.getMessage().setBody(body.toString());
+        
+    }
 
 }
 
